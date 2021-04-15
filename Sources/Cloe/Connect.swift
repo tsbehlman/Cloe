@@ -1,6 +1,7 @@
 // Created by Gil Birman on 1/11/20.
 
 import SwiftUI
+import Combine
 
 /// Inject a Cloe Store into a SwiftUI view
 ///
@@ -50,12 +51,13 @@ public struct Connect<State, SubState: Equatable, Content: View>: View {
     self.store = store
     self.selector = selector
     self.content = content
+    publisher = store.uniqueSubStatePublisher(selector)
   }
 
   public var body: some View {
     Group {
       (state ?? selector(store.state)).map(content)
-    }.onReceive(store.uniqueSubStatePublisher(selector)) { state in
+    }.onReceive(publisher) { state in
       self.state = state
     }
   }
@@ -63,4 +65,5 @@ public struct Connect<State, SubState: Equatable, Content: View>: View {
   // MARK: Private
 
   @SwiftUI.State private var state: SubState?
+  private var publisher: AnyPublisher<SubState, Never>
 }
