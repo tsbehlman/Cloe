@@ -39,8 +39,6 @@ public struct Connect<State, SubState: Equatable, Content: View>: View {
 
   // MARK: Public
 
-  public var store: Store<State>
-  public var selector: StateSelector<State, SubState>
   public var content: (SubState) -> Content
 
   public init(
@@ -48,22 +46,19 @@ public struct Connect<State, SubState: Equatable, Content: View>: View {
     selector: @escaping StateSelector<State, SubState>,
     content: @escaping (SubState) -> Content)
   {
-    self.store = store
-    self.selector = selector
     self.content = content
     publisher = store.uniqueSubStatePublisher(selector)
+    _state = SwiftUI.State(initialValue: selector(store.state))
   }
 
   public var body: some View {
-    Group {
-      (state ?? selector(store.state)).map(content)
-    }.onReceive(publisher) { state in
+    content(state).onReceive(publisher) { state in
       self.state = state
     }
   }
 
   // MARK: Private
 
-  @SwiftUI.State private var state: SubState?
+  @SwiftUI.State private var state: SubState
   private var publisher: AnyPublisher<SubState, Never>
 }
